@@ -15,7 +15,7 @@
       </h1>
       <p class="text-lg text-text-secondary leading-relaxed">
         在限定时间内完成器材的清洁、复核与回架操作<br />
-        通过调整风险阈值平衡速度与安全评分
+        通过调整风险阈值平衡安全策略与评分惩罚
       </p>
     </div>
 
