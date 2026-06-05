@@ -1,10 +1,11 @@
 <script lang="ts">
   import { gameStore } from '../stores/gameStore.js'
-  import { getHistory, exportHistory, exportSingleRecord, clearHistory } from '../utils/storage.js'
+  import { getHistory, exportHistory, exportSingleRecord, clearHistory, getReplay } from '../utils/storage.js'
   import type { HistoryRecord } from '../types/index.js'
 
   let showHistory = $state(false)
   let historyRecords = $state<HistoryRecord[]>([])
+  let showScoreDetail = $state(false)
 
   function loadHistory() {
     historyRecords = getHistory()
@@ -25,6 +26,16 @@
     historyRecords = []
   }
 
+  function handleViewReplay(record: HistoryRecord) {
+    if (record.hasReplay) {
+      gameStore.openReview(record.id)
+    }
+  }
+
+  function handleViewCurrentReplay() {
+    gameStore.openReview($gameStore.currentReplayId)
+  }
+
   let gradeColor = $derived.by(() => {
     const g = $gameStore.grade
     if (g === 'S') return '#FFD700'
@@ -32,6 +43,16 @@
     if (g === 'B') return '#F4A261'
     return '#E63946'
   })
+
+  let hasCurrentReplay = $derived($gameStore.currentReplayId !== null)
+
+  let completedCount = $derived($gameStore.tasks.filter((t) => t.completed).length)
+  let totalCount = $derived($gameStore.tasks.length)
+  let completionRate = $derived(totalCount > 0 ? completedCount / totalCount : 0)
+  let timeEfficiency = $derived($gameStore.totalTime > 0 ? $gameStore.remainingTime / $gameStore.totalTime : 0)
+
+  let speedBaseScore = $derived(Math.round(completionRate * 60))
+  let speedBonusScore = $derived(Math.round(timeEfficiency * 40))
 </script>
 
 <div class="min-h-screen bg-bg flex items-center justify-center p-6 pb-20">
@@ -66,11 +87,11 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4 text-sm">
+      <div class="grid grid-cols-2 gap-4 text-sm mb-4">
         <div class="bg-bg rounded-xl p-4">
           <div class="text-text-muted mb-1">完成任务</div>
           <div class="font-bold text-text">
-            {$gameStore.tasks.filter((t) => t.completed).length} / {$gameStore.tasks.length}
+            {completedCount} / {totalCount}
           </div>
         </div>
         <div class="bg-bg rounded-xl p-4">
@@ -78,9 +99,43 @@
           <div class="font-bold text-text">{$gameStore.threshold}%</div>
         </div>
       </div>
+
+      <button
+        onclick={() => (showScoreDetail = !showScoreDetail)}
+        class="w-full text-center text-xs text-teal-primary hover:text-teal-dark underline underline-offset-4 transition-colors py-2"
+      >
+        {showScoreDetail ? '收起分数来源' : '查看分数来源说明'}
+      </button>
+
+      {#if showScoreDetail}
+        <div class="mt-3 bg-bg rounded-xl p-4 text-sm space-y-3">
+          <div>
+            <div class="font-bold text-teal-primary mb-1">速度评分（{$gameStore.speedScore}分）</div>
+            <div class="text-text-secondary text-xs leading-relaxed">
+              完成率 {Math.round(completionRate * 100)}%（{completedCount}/{totalCount}）贡献 {speedBaseScore} 分
+              + 时间效率 {Math.round(timeEfficiency * 100)}% 贡献 {speedBonusScore} 分
+            </div>
+            <div class="text-text-muted text-xs mt-1">
+              公式：完成率 × 60 + 时间效率 × 40
+            </div>
+          </div>
+          <div>
+            <div class="font-bold text-orange-accent mb-1">安全评分（{$gameStore.safetyScore}分）</div>
+            <div class="text-text-secondary text-xs leading-relaxed">
+              阈值内器材每项满分 10 分，超阈值器材扣减惩罚，阈值本身惩罚 {Math.round($gameStore.threshold * 0.3)} 分
+            </div>
+            <div class="text-text-muted text-xs mt-1">
+              公式：(安全点数 / 完成任务满分) × 100 - 阈值 × 0.3
+            </div>
+          </div>
+          <div class="pt-2 border-t border-border/30 text-text-muted text-xs">
+            总分 = 速度评分 × 50% + 安全评分 × 50% = {Math.round($gameStore.speedScore * 0.5)} + {Math.round($gameStore.safetyScore * 0.5)} = {$gameStore.totalScore}
+          </div>
+        </div>
+      {/if}
     </div>
 
-    <div class="flex gap-3 justify-center mb-6">
+    <div class="flex gap-3 justify-center mb-6 flex-wrap">
       <button
         onclick={() => gameStore.startGame()}
         class="px-6 py-3 bg-teal-primary text-white rounded-xl font-bold hover:bg-teal-dark transition-colors shadow-md"
@@ -93,6 +148,14 @@
       >
         返回首页
       </button>
+      {#if hasCurrentReplay}
+        <button
+          onclick={handleViewCurrentReplay}
+          class="px-6 py-3 bg-text text-white rounded-xl font-bold hover:bg-text-secondary transition-colors shadow-md"
+        >
+          查看复盘
+        </button>
+      {/if}
       <button
         onclick={handleExportAll}
         class="px-6 py-3 bg-orange-accent text-white rounded-xl font-bold hover:bg-orange-hover transition-colors shadow-md"
@@ -155,6 +218,14 @@
                   <span class="text-xs text-text-muted">
                     速{record.speedScore} 安{record.safetyScore}
                   </span>
+                  {#if record.hasReplay}
+                    <button
+                      onclick={() => handleViewReplay(record)}
+                      class="text-xs text-teal-primary hover:underline font-medium"
+                    >
+                      复盘详情
+                    </button>
+                  {/if}
                   <button
                     onclick={() => handleExportSingle(record)}
                     class="text-xs text-orange-accent hover:underline"

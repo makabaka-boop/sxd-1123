@@ -1,7 +1,21 @@
 <script lang="ts">
   import { gameStore } from '../stores/gameStore.js'
+  import { getHistory } from '../utils/storage.js'
+  import type { HistoryRecord } from '../types/index.js'
 
-  let hovered = $state(false)
+  let showHistory = $state(false)
+  let historyRecords = $state<HistoryRecord[]>([])
+
+  function loadHistory() {
+    historyRecords = getHistory()
+    showHistory = true
+  }
+
+  function handleViewReplay(record: HistoryRecord) {
+    if (record.hasReplay) {
+      gameStore.openReview(record.id)
+    }
+  }
 </script>
 
 <div class="min-h-screen bg-bg flex items-center justify-center p-6">
@@ -56,5 +70,67 @@
     <div class="mt-6 text-xs text-text-muted">
       限时 120 秒 · 8 项器材任务
     </div>
+
+    <div class="mt-4">
+      <button
+        onclick={loadHistory}
+        class="text-sm text-teal-primary hover:text-teal-dark underline underline-offset-4 transition-colors"
+      >
+        历史记录与复盘
+      </button>
+    </div>
+
+    {#if showHistory}
+      <div class="bg-card rounded-2xl shadow-lg border border-border/50 p-6 mt-6 text-left">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-text">历史记录</h3>
+          <button
+            onclick={() => (showHistory = false)}
+            class="text-xs text-text-muted hover:text-text"
+          >
+            关闭
+          </button>
+        </div>
+
+        {#if historyRecords.length === 0}
+          <p class="text-sm text-text-muted text-center py-4">暂无历史记录</p>
+        {:else}
+          <div class="space-y-3 max-h-64 overflow-y-auto">
+            {#each historyRecords as record}
+              <div class="flex items-center justify-between bg-bg rounded-xl p-3">
+                <div class="flex items-center gap-3">
+                  <span
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white"
+                    class:bg-yellow-400={record.grade === 'S'}
+                    class:bg-green-safe={record.grade === 'A'}
+                    class:bg-yellow-caution={record.grade === 'B'}
+                    class:bg-red-warning={record.grade === 'C' || record.grade === 'D'}
+                  >
+                    {record.grade}
+                  </span>
+                  <div>
+                    <div class="text-sm font-bold text-text">{record.totalScore} 分</div>
+                    <div class="text-xs text-text-muted">{record.date}</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-text-muted">
+                    速{record.speedScore} 安{record.safetyScore}
+                  </span>
+                  {#if record.hasReplay}
+                    <button
+                      onclick={() => handleViewReplay(record)}
+                      class="text-xs text-teal-primary hover:underline font-medium"
+                    >
+                      复盘详情
+                    </button>
+                  {/if}
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {/if}
   </div>
 </div>

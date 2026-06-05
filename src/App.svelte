@@ -7,6 +7,7 @@
   import ShortcutBar from './lib/components/ShortcutBar.svelte'
   import HintPanel from './lib/components/HintPanel.svelte'
   import ResultPanel from './lib/components/ResultPanel.svelte'
+  import ReviewPanel from './lib/components/ReviewPanel.svelte'
   import { completedCount } from './lib/stores/gameStore.js'
 
   let phase = $derived($gameStore.phase)
@@ -70,4 +71,6 @@
   </div>
 {:else if phase === 'result'}
   <ResultPanel />
+{:else if phase === 'review'}
+  <ReviewPanel />
 {/if}

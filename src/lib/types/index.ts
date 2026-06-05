@@ -1,5 +1,5 @@
 export type Step = 'clean' | 'review' | 'shelve'
-export type GamePhase = 'start' | 'playing' | 'result'
+export type GamePhase = 'start' | 'playing' | 'result' | 'review'
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
 
 export interface Task {
@@ -25,6 +25,55 @@ export interface GameSession {
   totalTasks: number
 }
 
+export interface ReplayEvent {
+  type: 'game_start' | 'step_complete' | 'task_delay' | 'task_switch' | 'threshold_change' | 'task_complete' | 'hint_toggle' | 'game_end'
+  timestamp: number
+  gameTime: number
+  taskId: string
+  taskName: string
+  detail: string
+}
+
+export interface StepTiming {
+  step: Step
+  startedAt: number
+  completedAt: number | null
+}
+
+export interface TaskReplaySummary {
+  taskId: string
+  taskName: string
+  delayCount: number
+  completedAt: number | null
+  stepsCompleted: number
+  riskLevel: number
+  stepTimings: StepTiming[]
+  completionOrder: number
+}
+
+export interface ThresholdRecord {
+  time: number
+  value: number
+}
+
+export interface ScoreBreakdown {
+  speedScore: number
+  safetyScore: number
+  totalScore: number
+  speedDetail: string
+  safetyDetail: string
+}
+
+export interface ReplayData {
+  sessionId: string
+  events: ReplayEvent[]
+  taskSummaries: TaskReplaySummary[]
+  thresholdHistory: ThresholdRecord[]
+  scoreBreakdown: ScoreBreakdown
+  totalGameTime: number
+  actualTimeUsed: number
+}
+
 export interface HistoryRecord {
   id: string
   date: string
@@ -34,6 +83,7 @@ export interface HistoryRecord {
   safetyScore: number
   completedTasks: number
   totalTasks: number
+  hasReplay: boolean
 }
 
 export const STEP_LABELS: Record<Step, string> = {
