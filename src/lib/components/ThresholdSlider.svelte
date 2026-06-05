@@ -99,8 +99,8 @@
   </div>
 
   <div class="flex justify-between mt-5 text-xs text-text-muted">
-    <span>速度优先</span>
+    <span>低阈值（惩罚小）</span>
     <span class="text-text-secondary font-medium">← → 微调</span>
-    <span>安全优先</span>
+    <span>高阈值（保护强）</span>
   </div>
 </div>

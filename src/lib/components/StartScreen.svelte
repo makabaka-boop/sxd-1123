@@ -41,7 +41,7 @@
       </div>
       <div class="mt-4 p-3 bg-orange-accent/5 rounded-xl border border-orange-accent/20">
         <p class="text-xs text-orange-accent leading-relaxed">
-          💡 拖动风险阈值预警线调整安全策略：阈值越高越安全但速度评分越低，阈值越低速度评分高但安全风险增大。
+          💡 拖动风险阈值预警线调整安全策略：阈值越高，高风险器材不易超标但阈值本身有惩罚；阈值越低，惩罚小但高风险器材容易拉低安全评分。
         </p>
       </div>
     </div>

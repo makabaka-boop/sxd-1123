@@ -66,12 +66,14 @@ function createGameStore() {
   }
 
   function startTimer() {
-    if (timer) clearInterval(timer)
+    stopTimer()
     timer = setInterval(() => {
       update((s) => {
+        if (s.phase !== 'playing') {
+          stopTimer()
+          return s
+        }
         if (s.remainingTime <= 1) {
-          if (timer) clearInterval(timer)
-          timer = null
           return finishGame(s)
         }
         return { ...s, remainingTime: s.remainingTime - 1 }
@@ -79,7 +81,17 @@ function createGameStore() {
     }, 1000)
   }
 
+  function stopTimer() {
+    if (timer) {
+      clearInterval(timer)
+      timer = null
+    }
+  }
+
   function finishGame(state: GameState): GameState {
+    if (state.phase === 'result') return state
+    stopTimer()
+
     const completedTasks = state.tasks.filter((t) => t.completed).length
     const totalTasks = state.tasks.length
     const speedScore = calculateSpeedScore(
@@ -208,14 +220,12 @@ function createGameStore() {
   }
 
   function resetGame() {
-    if (timer) clearInterval(timer)
-    timer = null
+    stopTimer()
     set(createInitialState())
   }
 
   function goToStart() {
-    if (timer) clearInterval(timer)
-    timer = null
+    stopTimer()
     update((s) => ({
       ...createInitialState(),
     }))
